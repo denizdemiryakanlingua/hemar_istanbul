@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tematik Katılımcı Tablosu — Harezmi Eğitim Modeli</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f8f6f1;
+    --white: #ffffff;
+    --text: #1a1a2e;
+    --muted: #6b6b8a;
+    --border: #e4e0d8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: #1a1a2e;
+    padding: 2.2rem 2.5rem 1.8rem;
+  }
+  header h1 {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 1.65rem;
+    color: #fff;
+    line-height: 1.3;
+  }
+  header p {
+    color: rgba(255,255,255,0.5);
+    font-size: 0.78rem;
+    margin-top: 0.4rem;
+    font-weight: 300;
+    letter-spacing: 0.04em;
+  }
+
+  /* CONTROLS */
+  .controls {
+    display: flex;
+    gap: 0.8rem;
+    padding: 1rem 2.5rem;
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .controls input, .controls select {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    padding: 0.5rem 0.9rem;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .controls input { flex: 1; min-width: 180px; }
+  .controls input:focus, .controls select:focus { border-color: #1a1a2e; }
+  .stat {
+    margin-left: auto;
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .stat b { color: var(--text); }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 1rem 2.5rem 0.8rem;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0.25rem 0.6rem;
+    border-radius: 20px;
+    border: 1.5px solid transparent;
+    transition: all 0.15s;
+  }
+  .legend-item:hover { border-color: currentColor; opacity: 0.8; }
+  .legend-item.active { border-color: currentColor; font-weight: 600; }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* MAIN CONTENT */
+  .content {
+    padding: 1.5rem 2.5rem 4rem;
+  }
+
+  /* THEME BLOCK */
+  .theme-block {
+    margin-bottom: 2.5rem;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--white);
+    transition: opacity 0.2s;
+  }
+  .theme-block.hidden { display: none; }
+
+  .theme-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.9rem 1.2rem;
+    cursor: pointer;
+    user-select: none;
+  }
+  .theme-dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .theme-title {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+  .theme-count {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.55rem;
+    border-radius: 20px;
+    margin-left: auto;
+  }
+  .theme-toggle {
+    font-size: 0.75rem;
+    color: var(--muted);
+    transition: transform 0.2s;
+  }
+  .theme-block.collapsed .theme-toggle { transform: rotate(-90deg); }
+
+  /* TABLE */
+  .table-wrap {
+    overflow-x: auto;
+    border-top: 1px solid var(--border);
+  }
+  .theme-block.collapsed .table-wrap { display: none; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.79rem;
+    min-width: 700px;
+  }
+  thead th {
+    padding: 0.55rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.02);
+    white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(0,0,0,0.025); }
+  td {
+    padding: 0.65rem 1rem;
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  td:first-child {
+    text-align: center;
+    font-size: 0.68rem;
+    color: var(--muted);
+    font-weight: 600;
+    width: 36px;
+  }
+  .ilce-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.12rem 0.45rem;
+    border-radius: 20px;
+    white-space: nowrap;
+    letter-spacing: 0.03em;
+  }
+  .ad-cell { font-weight: 600; color: #1a1a2e; }
+  .okul-cell { color: var(--muted); font-size: 0.75rem; margin-top: 2px; }
+  .tel-cell { font-size: 0.73rem; color: var(--muted); white-space: nowrap; }
+  .konu-cell { color: var(--text); max-width: 320px; font-size: 0.76rem; line-height: 1.5; }
+
+  .no-result {
+    text-align: center;
+    padding: 3rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 600px) {
+    .content { padding: 1rem; }
+    .controls, .legend { padding: 0.8rem 1rem; }
+    header { padding: 1.5rem 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Harezmi Eğitim Modeli — Tematik Katılımcı Tablosu</h1>
+  <p>İstanbul İlçe &amp; Okul Bazlı Bildiri / Proje · 8 Tema · 86 Katılımcı Kaydı</p>
+</header>
+
+<div class="controls">
+  <input type="text" id="searchInput" placeholder="🔍  Ad, okul, ilçe veya konu ara…">
+  <select id="themeFilter">
+    <option value="">Tüm Temalar</option>
+  </select>
+  <div class="stat">Gösterilen: <b id="countShown">86</b> / 86</div>
+</div>
+
+<div class="legend" id="legend"></div>
+<div class="content" id="content"></div>
+<div class="no-result" id="noResult" style="display:none">Arama sonucu bulunamadı.</div>
+
+<script>
+const THEMES = [
+  {
+    id: 1,
+    title: "Harezmi & TYMM — Kuramsal, Karşılaştırmalı & Politika Analizleri",
+    color: "#3B4DB8",
+    light: "#EEF0FF",
+    dark: "#3B4DB8",
+    rows: [
+      {ilce:"Ataşehir",      okul:"Ataşehir İlçe MEM (Akşemsettin İlkokulu)",                  ad:"Figen Köksalan Sanchezpena",                                          tel:"5055048620",              konu:"Harezmi Eğitim Modeli ve Türkiye Yüzyılı Maarif Modeli İlişkisi: 21. Yüzyıl Becerileri Ekseninde Bir Doküman Analizi"},
+      {ilce:"Ataşehir",      okul:"Ataşehir Kız Anadolu İmam Hatip Lisesi",                    ad:"Şeyma Reyhan KULAKSIZOĞLU",                                          tel:"533 512 29 99",           konu:"Maarif Modeli Perspektifinde Harezmi ile Değerler Eğitimi: QR Kodlu Kitap"},
+      {ilce:"Bağcılar",      okul:"Nevin Mehmet Bilginer İlkokulu",                            ad:"ŞERİFE DEMİRCAN",                                                    tel:"5058203993",              konu:"Epistemoloji'den Öğrenme Yaşantısına Uzanan Bir Çerçeve: 21. Yüzyıl Becerileri Açısından Harezmi Eğitim Modeli ve Türkiye Yüzyılı Maarif Modeli"},
+      {ilce:"Bağcılar",      okul:"Nevin Mehmet Bilginer İlkokulu",                            ad:"SELDA DEGRAAF",                                                      tel:"5362699291",              konu:"Epistemoloji'den Öğrenme Yaşantısına Uzanan Bir Çerçeve: 21. Yüzyıl Becerileri Açısından Harezmi Eğitim Modeli ve Türkiye Yüzyılı Maarif Modeli"},
+      {ilce:"Başakşehir",    okul:"Aziz Sancar Ortaokulu",                                     ad:"Tuğba DEMİRYAKAN",                                                   tel:"536 916 16 82",           konu:"Sosyal Bilgiler Eğitiminde Türkiye Yüzyılı Maarif Modeli"},
+      {ilce:"Beyoğlu",       okul:"İlçe MEM — Fatih Projesi Koordinatörü",                     ad:"Gökçen YOLDAŞ",                                                      tel:"5425024434",              konu:"Türkiye Yüzyılı Maarif Modeli Bildiri Sunumu"},
+      {ilce:"Çatalca",       okul:"Ferhatpaşa İlkokulu",                                       ad:"Meltem ÖZTÜRK",                                                      tel:"0505 388 31 77",          konu:"Araştırmanın Kısa Çerçevesi (Harezmi Eğitim Modeli)"},
+      {ilce:"Esenler",       okul:"Oruç Reis İlkokulu",                                        ad:"Rümeysa DEMİREL",                                                    tel:"5432363967",              konu:"TYMM'nin Kuramsal Temellerinde Disiplinler Ötesi Bir Altyapı Olarak Harezmi Eğitim Modeli"},
+      {ilce:"Esenler",       okul:"Esenler İlçe Milli Eğitim Müdürlüğü",                      ad:"Ezgi Hacer BÜK",                                                     tel:"5397224640",              konu:"Türkiye Yüzyılı Maarif Modelinin Uygulama Zemini Olarak Harezmi Eğitim Modeli: Beceri Temelli Eğitim Bağlamında Bir Doküman Analizi"},
+      {ilce:"Maltepe",       okul:"Maltepe İlçe Milli Eğitim Müdürlüğü",                      ad:"EMİNE DİDEM BAŞ",                                                    tel:"5058127031",              konu:"Türkiye Yüzyılı Maarif Modeli'nde 'Zenginleştirme' ve Farklılaştırma Stratejisi Olarak Harezmi Eğitim Modeli: Bir Program Karşılaştırma ve Doküman Analizi"},
+      {ilce:"Pendik",        okul:"Pendik İTO Şehit Ahmet Aslanhan Anadolu İmam Hatip Lisesi", ad:"Belgin Feyza KURÇENLİ",                                               tel:"506 995 28 75",           konu:"Eğitimde Kalite"},
+      {ilce:"Sancaktepe",    okul:"Sancaktepe Şakir Demir İlkokulu",                           ad:"Nefise ÇELİK",                                                       tel:"5449750160",              konu:"Gerçek Yaşam Problemlerinin Öğretiminde Sistem Düşüncesi: Harezmi Eğitim Modeli ve Türkiye Yüzyılı Maarif Modelinin Kuramsal Analizi"},
+      {ilce:"Ümraniye",      okul:"İstanbul Finans Merkezi İlkokulu",                          ad:"Banu ERGÜÇ ŞAHAN, Seda KARAGEYİK YILDIRIM, Fatma Nur SÜMENGEN, Nazlı KARA KAPLAN", tel:"5059576905", konu:"Harezmi Eğitim Modeli ile Türkiye Yüzyılı Maarif Modelini Pedagojik Yaklaşımlar ve Beceri Temelli Eğitim Anlayışı Açısından İnceleme ve Karşılaştırma"},
+    ]
+  },
+  {
+    id: 2,
+    title: "Disiplinlerarası Öğrenme, Ders Tasarımı & Öğretim Yaklaşımları",
+    color: "#0A7158",
+    light: "#E4F5F0",
+    dark: "#0A7158",
+    rows: [
+      {ilce:"Bağcılar",      okul:"15 Temmuz İlkokulu",                                        ad:"GÖZDE YÜKSEL KARA",                                                  tel:"0536 764 35 26",          konu:"Harezmi'deki Disiplinlerarası Öğrenme Yaklaşımı ile Finlandiya Phenomenon Based Learning (Olgulara Dayalı Öğrenme) Arasındaki İlişki"},
+      {ilce:"Bağcılar",      okul:"15 Temmuz İlkokulu",                                        ad:"KÜBRA ÖZIŞIK",                                                       tel:"0507 871 39 08",          konu:"Harezmi'deki Disiplinlerarası Öğrenme Yaklaşımı ile Finlandiya Phenomenon Based Learning (Olgulara Dayalı Öğrenme) Arasındaki İlişki"},
+      {ilce:"Bağcılar",      okul:"15 Temmuz İlkokulu",                                        ad:"MÜCAHİT KAÇMAZ",                                                     tel:"0554 116 79 97",          konu:"Harezmi'deki Disiplinlerarası Öğrenme Yaklaşımı ile Finlandiya Phenomenon Based Learning (Olgulara Dayalı Öğrenme) Arasındaki İlişki"},
+      {ilce:"Başakşehir",    okul:"Başakşehir Borsa İstanbul Mesleki ve Teknik Anadolu Lisesi", ad:"Burhan Duran",                                                       tel:"530 354 38 90",           konu:"Meslek Lisesi Eğitiminde Harezmi Eğitim Modeli"},
+      {ilce:"Beyoğlu",       okul:"Haliç İlkokulu",                                            ad:"ÇİĞDEM DERVİŞOĞLU",                                                  tel:"5053623254",              konu:"Türkiye Yüzyılı Maarif Modeli Bağlamında Harezmi Eğitim Modeli Uygulamalarının İlkokul Düzeyinde Disiplinlerarası Öğrenme Yaklaşımı Açısından İncelenmesi"},
+      {ilce:"Beyoğlu",       okul:"İlçe MEM — Harezmi Koordinatörü",                           ad:"Fatime AKSU",                                                        tel:"5536489468",              konu:"Harezmi Eğitim Modeli'nde Disiplinlerarası Meslektaş Öğrenmesi ve Ders Tasarımı Becerilerine Etkisi: Uygulayıcı Öğretmen Algıları"},
+      {ilce:"Çekmeköy",      okul:"Çekmeköy Merkez Ortaokulu",                                 ad:"GÜLGÜN GÜVENÇ",                                                      tel:"5056495291",              konu:"Harezmi Eğitim Modelinin Disiplinlerarası Öğrenme Yaklaşımları Açısından Değerlendirilmesi"},
+      {ilce:"Çekmeköy",      okul:"Öğretmen Semiha Yıldırım İlkokulu",                         ad:"Nihal DELİBAY",                                                      tel:"505 759 93 68",           konu:"Harezmi Eğitim Modelinin Disiplinlerarası Öğrenme Yaklaşımları Açısından Değerlendirilmesi"},
+      {ilce:"Fatih",         okul:"Yedikule İlkokulu",                                         ad:"Bakır UZUNKAYA",                                                     tel:"0533 748 76 34",          konu:"Harezmi Kimdir? Nerede ve Ne Zaman Yaşamıştır? Matematiğe Katkıları Nelerdir? Cebir Kelimesi Nereden Gelir?"},
+      {ilce:"Kartal",        okul:"Harezmi Eğitim Modeli Proje Koordinatörlüğü",               ad:"Gamze ZENGİN",                                                       tel:"5498183995",              konu:"Harezmi Eğitim Modelinin Disiplinlerarası Öğrenme Yaklaşımları Açısından Değerlendirilmesi"},
+      {ilce:"Küçükçekmece",  okul:"TOKİ Akasya Anaokulu",                                      ad:"YELİZ ÇİFTÇİ",                                                       tel:"5533401292",              konu:"Farklı Öğrenme Ortamlarının Öğretime Katkısı"},
+      {ilce:"Küçükçekmece",  okul:"Sefaköy Lisesi",                                            ad:"NAFİ ÇAĞLAR",                                                        tel:"5424219784",              konu:"Yeni Eğitici İçerikler Üretme"},
+      {ilce:"Pendik",        okul:"Pendik İTO Mesleki ve Teknik Anadolu Lisesi",                ad:"Gamze ZENGİN",                                                       tel:"549 818 39 95",           konu:"Harezmi Eğitim Modelinin Disiplinlerarası Öğrenme Yaklaşımları Açısından Değerlendirilmesi"},
+      {ilce:"Sarıyer",       okul:"Hacı Mehmet Şalgamcıoğlu Ortaokulu",                        ad:"Özge VAROL",                                                         tel:"5386167148",              konu:"Harezmi Eğitim Modeli"},
+      {ilce:"Sarıyer",       okul:"Hacı Mehmet Şalgamcıoğlu Ortaokulu",                        ad:"Aybuke ÇORA",                                                        tel:"5382428452",              konu:"Harezmi Eğitim Modeli"},
+      {ilce:"Sarıyer",       okul:"Hacı Mehmet Şalgamcıoğlu Ortaokulu",                        ad:"Kardelen TAŞ",                                                       tel:"5423562384",              konu:"Harezmi Eğitim Modeli"},
+      {ilce:"Tuzla",         okul:"Gazi Mustafa Paşa İlkokulu",                                ad:"Dilek ALTUNSÖZ",                                                     tel:"5077666970",              konu:"TYMM Temelinde Tasarım Odaklı Düşünmenin Harezmi Eğitim Modeli Kapsamında İncelenmesi"},
+      {ilce:"Tuzla",         okul:"Gazi Mustafa Paşa Ortaokulu / İlkokulu / Kaşif Kalkavan A.L.", ad:"Erge Evşen KARAER, Dilek ALTUNSÖZ, Aslı AŞIK",                 tel:"5384190352",              konu:"TYMM Temelinde Harezmi Eğitim Modeli'nde Öğrenmeyi Destekleyen Biçimlendirici Değerlendirme Süreçlerinin İncelenmesi"},
+      {ilce:"Üsküdar",       okul:"Üsküdar Borsa İstanbul Kız Mesleki ve Teknik Anadolu Lisesi",ad:"MUSTAFA İNCE",                                                      tel:"5069629535",              konu:"Harezmi Eğitim Modeline Katılan Ortaöğretim Öğrencilerinin Öğrenme Deneyimlerine İlişkin Görüşlerinin İncelenmesi"},
+    ]
+  },
+  {
+    id: 3,
+    title: "21. Yüzyıl Becerileri & Dünya Vatandaşlığı",
+    color: "#8B3A8B",
+    light: "#F5EAF5",
+    dark: "#8B3A8B",
+    rows: [
+      {ilce:"Bakırköy",      okul:"Bakırköy İlçe Milli Eğitim Müdürlüğü",                     ad:"Melike Konyalıoğlu",                                                 tel:"5326876888",              konu:"Dünya Vatandaşlığı Becerilerini Geliştirmekte Harezmi Eğitim Modeli'nin Katkısını Ortaya Çıkarmak"},
+      {ilce:"Başakşehir",    okul:"İBB Fatih Sultan Mehmet İlkokulu",                          ad:"Gönül FİLİZ",                                                        tel:"553 590 15 57",           konu:"Geleneksel Oyun Temelli Uygulamaların 5–6 Yaş Grubu Çocukların 21. Yüzyıl Becerileri Üzerindeki Etkisi: Harezmi Örneği"},
+      {ilce:"Pendik",        okul:"Kırımlı Fazilet Olcay Anadolu Lisesi",                      ad:"Aysel TEKİN",                                                        tel:"530 159 21 70",           konu:"21. Yüzyıl Becerilerini Okul ve Günlük Yaşamda Nasıl Daha Etkin Kullanabilirim?"},
+      {ilce:"Pendik",        okul:"Kırımlı Fazilet Olcay Anadolu Lisesi",                      ad:"Ayşe KURT",                                                          tel:"505 393 74 75",           konu:"21. Yüzyıl Becerilerini Okul ve Günlük Yaşamda Nasıl Daha Etkin Kullanabilirim?"},
+      {ilce:"Pendik",        okul:"Kırımlı Fazilet Olcay Anadolu Lisesi",                      ad:"Gamze TERZİOĞLU",                                                    tel:"535 363 01 59",           konu:"21. Yüzyıl Becerilerini Okul ve Günlük Yaşamda Nasıl Daha Etkin Kullanabilirim?"},
+      {ilce:"Pendik",        okul:"Kırımlı Fazilet Olcay Anadolu Lisesi",                      ad:"Şeyma ŞAMTAŞ",                                                       tel:"541 883 10 01",           konu:"21. Yüzyıl Becerilerini Okul ve Günlük Yaşamda Nasıl Daha Etkin Kullanabilirim?"},
+      {ilce:"Sancaktepe",    okul:"Şehit Abdullah Tayyip Olçok Anadolu İmam Hatip Lisesi",     ad:"Neslihan BACAK",                                                     tel:"5555700455",              konu:"Harezmi Eğitim Modelinin 6. Sınıf Öğrencilerinin Çevresel Duyuş, Çevresel Davranış ve 21. Yüzyıl Becerileri Üzerindeki Etkilerinin İncelenmesi"},
+    ]
+  },
+  {
+    id: 4,
+    title: "Sürdürülebilirlik, Çevre & Doğa",
+    color: "#2D7D3A",
+    light: "#E8F5EA",
+    dark: "#2D7D3A",
+    rows: [
+      {ilce:"Beşiktaş",      okul:"Hamiyet Gerçek İlkokulu",                                   ad:"Nida BİRİNCİOĞLU",                                                   tel:"5056370702",              konu:"İlkokul Düzeyinde Sürdürülebilir Yaşam Alışkanlıklarının Geliştirilmesine Yönelik Bir Harezmi Eğitim Uygulaması"},
+      {ilce:"Beşiktaş",      okul:"Hamiyet Gerçek İlkokulu",                                   ad:"Gülgün GÜNSAY ÖNER",                                                 tel:"5073700209",              konu:"İlkokul Düzeyinde Sürdürülebilir Yaşam Alışkanlıklarının Geliştirilmesine Yönelik Bir Harezmi Eğitim Uygulaması"},
+      {ilce:"Beşiktaş",      okul:"Hamiyet Gerçek İlkokulu",                                   ad:"Hatemşah EREN",                                                      tel:"5422537426",              konu:"İlkokul Düzeyinde Sürdürülebilir Yaşam Alışkanlıklarının Geliştirilmesine Yönelik Bir Harezmi Eğitim Uygulaması"},
+      {ilce:"Kadıköy",       okul:"Kadıköy Anadolu Lisesi",                                    ad:"NİLGÜN BÜYÜKLÜ",                                                     tel:"5422546695",              konu:"Okulumuzdaki Atıl Alanların Doğa Temelli ve Çok Amaçlı Öğrenme Ortamlarına Dönüştürülmesi"},
+      {ilce:"Kadıköy",       okul:"Kadıköy Anadolu Lisesi",                                    ad:"RUKİYE BÜŞRA KARAKURT",                                              tel:"5531876744",              konu:"Okulumuzdaki Atıl Alanların Doğa Temelli ve Çok Amaçlı Öğrenme Ortamlarına Dönüştürülmesi"},
+      {ilce:"Kadıköy",       okul:"Kadıköy Anadolu Lisesi",                                    ad:"BURCU ÇEBİ",                                                         tel:"5055362503",              konu:"Okulumuzdaki Atıl Alanların Doğa Temelli ve Çok Amaçlı Öğrenme Ortamlarına Dönüştürülmesi"},
+      {ilce:"Kadıköy",       okul:"Kadıköy Anadolu Lisesi",                                    ad:"RUKİYE KILIÇ",                                                       tel:"5347171074",              konu:"Okulumuzdaki Atıl Alanların Doğa Temelli ve Çok Amaçlı Öğrenme Ortamlarına Dönüştürülmesi"},
+      {ilce:"Kağıthane",     okul:"İmece İlkokulu",                                            ad:"HAMİDE ÇAKMAK",                                                      tel:"5058921720",              konu:"Geri Dönüşüm"},
+      {ilce:"Kağıthane",     okul:"İmece İlkokulu",                                            ad:"DİLEK ERDOĞAN",                                                      tel:"5063584616",              konu:"Geri Dönüşüm"},
+      {ilce:"Kağıthane",     okul:"İmece İlkokulu",                                            ad:"DİDEM AKAR",                                                         tel:"5452859877",              konu:"Geri Dönüşüm"},
+      {ilce:"Kağıthane",     okul:"İmece İlkokulu",                                            ad:"RABİA GÜRSOY KAYA",                                                  tel:"5063088884",              konu:"Geri Dönüşüm"},
+      {ilce:"Maltepe",       okul:"İBB Şehit Mahmut Bayram İmam Hatip Ortaokulu",              ad:"SEVGİ TUFAN",                                                        tel:"5374932810",              konu:"Okulda Su Tasarrufu Yapılması"},
+      {ilce:"Sancaktepe",    okul:"Sancaktepe Safa İlkokulu",                                  ad:"Ayşe Senem YILMAZ YÜCE",                                             tel:"5054916238",              konu:"Küresel Hedeflerden Yerel Problemlere: Harezmi Eğitim Modeli Tematik Alanlarının Sürdürülebilir Kalkınma Amaçları (SKA) Açısından İncelenmesi"},
+      {ilce:"Tuzla",         okul:"Orhanlı İlkokulu",                                          ad:"Cansel DEVECİ",                                                       tel:"5059166392",              konu:"Harezmi Eğitim Modeli ve TYMM Kapsamında Sürdürülebilirliğin İncelenmesi"},
+      {ilce:"Ümraniye",      okul:"Nurettin Topçu İlkokulu",                                   ad:"Gülay KAVRAZ, Ayşegül RENDECİ YUMURTACI",                            tel:"5058267288 / 5054501861", konu:"Sürdürülebilir Gelecek İçin Eğitim: Harezmi Eğitim Modeli ve Türkiye Yüzyılı Maarif Modeli Perspektifi"},
+    ]
+  },
+  {
+    id: 5,
+    title: "Sağlık, Yaşam Becerileri & Kişisel Gelişim",
+    color: "#BF5300",
+    light: "#FFF0E5",
+    dark: "#BF5300",
+    rows: [
+      {ilce:"Bahçelievler",  okul:"15 Temmuz Şehitleri İlkokulu",                              ad:"ÖMER ÇALIŞ",                                                         tel:"0505 551 04 33",          konu:"Diş Fırçalama Etkinlikleri"},
+      {ilce:"Bahçelievler",  okul:"15 Temmuz Şehitleri İlkokulu",                              ad:"MAHMUT YALÇIN",                                                      tel:"0532 725 85 30",          konu:"Ayakkabı Bağlama Etkinlikleri"},
+      {ilce:"Esenyurt",      okul:"Prof. Dr. Ömer Dinçer İlkokulu",                            ad:"Berika ASLAN",                                                       tel:"5456836394",              konu:"Harezmi Eğitim Modelinin Dördüncü Sınıf Öğrencilerinin Zaman Yönetimi Becerilerine Etkisi"},
+      {ilce:"Esenyurt",      okul:"Prof. Dr. Ömer Dinçer İlkokulu",                            ad:"Begüm SEVİL",                                                        tel:"5324784373",              konu:"Harezmi Eğitim Modelinin Dördüncü Sınıf Öğrencilerinin Zaman Yönetimi Becerilerine Etkisi"},
+      {ilce:"Gaziosmanpaşa", okul:"Bekir Sami Dedeoğlu İlkokulu",                              ad:"Sevilay ŞEYHOĞLU",                                                   tel:"530 558 17 89",           konu:"Sağlıklı Yaşam ve Beslenme"},
+      {ilce:"Maltepe",       okul:"Gülsuyu İmam Hatip Ortaokulu",                              ad:"HATİCE ŞEYDA BAYRAKÇI",                                              tel:"5415711767",              konu:"Evde Zaman Yönetiminin İyi Yapılması"},
+      {ilce:"Şişli",         okul:"Şehit Mehmet Selim Kiraz Anaokulu",                         ad:"Tuğçe YENİÇERİ",                                                     tel:"5374537701",              konu:"Sağlıklı Yaşam ve Spor"},
+      {ilce:"Şişli",         okul:"Şehit Mehmet Selim Kiraz Anaokulu",                         ad:"Gökçenur KUL",                                                       tel:"5061548195",              konu:"Sağlıklı Yaşam ve Spor"},
+      {ilce:"Şişli",         okul:"Şehit Mehmet Selim Kiraz Anaokulu",                         ad:"Ezgi ÖKSÜZ",                                                         tel:"5319213382",              konu:"Sağlıklı Yaşam ve Spor"},
+    ]
+  },
+  {
+    id: 6,
+    title: "Teknoloji, Dijital Dünya & Yapay Zeka",
+    color: "#1565A8",
+    light: "#E5F0FC",
+    dark: "#1565A8",
+    rows: [
+      {ilce:"Eyüpsultan",    okul:"İslambey İlkokulu",                                         ad:"Şükrü KURT",                                                         tel:"554 129 57 85",           konu:"Dijital Dünyada Zorbalık"},
+      {ilce:"Eyüpsultan",    okul:"İslambey İlkokulu",                                         ad:"Nagihan ÖZER",                                                       tel:"539 714 89 13",           konu:"Dijital Dünyada Zorbalık"},
+      {ilce:"Eyüpsultan",    okul:"İslambey İlkokulu",                                         ad:"Sabriye ŞENTÜRK",                                                    tel:"532 541 50 30",           konu:"Dijital Dünyada Zorbalık"},
+      {ilce:"Kartal",        okul:"Ergenekon İbrahim Şakir İlkokulu",                          ad:"Gamze SAVUCU",                                                       tel:"5052523981",              konu:"Üretken Yapay Zekanın Harezmi Eğitim Modeli Ders Tasarım Süreçlerine Entegrasyonu"},
+      {ilce:"Küçükçekmece",  okul:"Penyelüks Hasan Gürel İlkokulu",                            ad:"OKAN ARSLAN",                                                        tel:"5077806008",              konu:"Teknoloji Bağımlılığının Önüne Geçme"},
+      {ilce:"Tuzla",         okul:"TOKİ Oruç Reis İlkokulu",                                   ad:"Resul COŞKUN",                                                       tel:"5432894947",              konu:"TYMM Perspektifinden İlkokul Öğrencilerinde Ekran Bağımlılığı Literatür Taraması"},
+      {ilce:"Tuzla",         okul:"Gazi Mustafa Paşa Ortaokulu",                               ad:"Erge Evşen KARAER",                                                  tel:"5384190352",              konu:"Harezmi Eğitim Modeli ve TYMM Kapsamında Dijital Yeterliliklerin İncelenmesi"},
+      {ilce:"Üsküdar",       okul:"Capitol Ortaokulu",                                         ad:"ELİF HÜRRİYET AYDIN",                                                tel:"5305208717",              konu:"Eğitimde Dijital Dönüşüm ve Teknoloji Entegrasyonu"},
+      {ilce:"Zeytinburnu",   okul:"Kazım Özalp İlkokulu",                                      ad:"ZEKİYE NUR UÇAR",                                                    tel:"5055753794",              konu:"Evde Teknoloji Kullanımı"},
+    ]
+  },
+  {
+    id: 7,
+    title: "Sosyal-Duygusal Gelişim, Değerler, Kimlik & Etik",
+    color: "#9B2C2C",
+    light: "#FDF0F0",
+    dark: "#9B2C2C",
+    rows: [
+      {ilce:"Avcılar",       okul:"Denizköşkler İlkokulu",                                     ad:"Elif SEVCAN",                                                        tel:"532 557 61 46",           konu:"Akran Zorbalığı / Akran Nezaketi"},
+      {ilce:"Beşiktaş",      okul:"100. Yıl Mustafa Kemal İlkokulu",                           ad:"Özden AKDOĞAN",                                                      tel:"5368502805",              konu:"Harezmi Eğitim Modeli Kapsamında Akran Nezaketi Uygulamalarının İlkokul Öğrencilerinin Sosyal-Duygusal Becerilerine Katkısı: Bir Eylem Araştırması"},
+      {ilce:"Beşiktaş",      okul:"Beşiktaş İsmail Tarman İmam Hatip Ortaokulu",               ad:"Burcu ALKURU ONUR",                                                  tel:"5303173824",              konu:"Türkiye Yüzyılı Maarif Modeli Bağlamında Harezmi Eğitim Modeli ile Yerel Tarih Bilincinin Geliştirilmesi: Mekânsal Deneyim ve Değer Temelli Öğrenme"},
+      {ilce:"Beylikdüzü",    okul:"Emin Yükseloğlu Kız İmam Hatip Lisesi",                    ad:"Ebru Özdoğan",                                                       tel:"5415436158",              konu:"His Görselleştirilmesi İçin Kullanılan Yöntem ve Araçların İncelenmesi"},
+      {ilce:"Eyüpsultan",    okul:"Muhsin Yazıcıoğlu İlkokulu",                                ad:"Ayça GÜLER SAMUT",                                                   tel:"505 642 06 11",           konu:"Motivasyonu Artıran Oyunlar"},
+      {ilce:"Küçükçekmece",  okul:"TOKİ Atakent Spor Lisesi",                                  ad:"ESRA NUR TAŞ",                                                       tel:"5309445636",              konu:"Öğrencilerde Etik Davranış"},
+      {ilce:"Sancaktepe",    okul:"Samandıra Kız Anadolu İmam Hatip Lisesi",                   ad:"Abdurrahman BİLGİN",                                                 tel:"5054248444",              konu:"Harezmi Eğitim Modeli Uygulama Kılavuzundaki Etik ve Ahlaki Vurguların Türkiye Yüzyılı Maarif Modeli Erdem-Değer-Eylem Çerçevesi Açısından Analizi"},
+      {ilce:"Ümraniye",      okul:"Nihat Sami Banarlı Ortaokulu",                              ad:"Berrin ULUSOY, Büşra ŞENOCAK, İlksen ESKİBAYLAR",                    tel:"5052593700",              konu:"Demokratik Adalet ve Akran Arabuluculuğu Perspektifinden Harezmi Eğitim Modeli"},
+      {ilce:"Üsküdar",       okul:"Çamlıca Kız Lisesi",                                        ad:"BESTEGÜL AŞCIOĞLU",                                                  tel:"5071737078",              konu:"İnsan Kimliğini Kendisi mi Oluşturur, Yoksa Toplum mu?"},
+    ]
+  },
+  {
+    id: 8,
+    title: "Okul Öncesi, Kapsayıcı & Özel Eğitim",
+    color: "#5B6A00",
+    light: "#F3F5E4",
+    dark: "#5B6A00",
+    rows: [
+      {ilce:"Ataşehir",      okul:"Akşemsettin İlkokulu",                                      ad:"Elif Nazlı PÜSKÜLLER",                                                tel:"545 314 25 47",           konu:"Okul Öncesi Eğitimde Kültürel Farkındalık Geliştirme Sürecinde Harezmi Eğitim Modeli Uygulamaları: Bir Eylem Araştırması"},
+      {ilce:"Bakırköy",      okul:"Mustafa Pars Anaokulu",                                     ad:"Suzan Pıtılıoğlu / Sibel Karabudak / Seda Nur Cengiz",               tel:"5058406590 / 5462671646 / 5545460861", konu:"Okul Öncesi Çocuklarda Animasyon Temelli ve Besin Temelli Maruziyetlerin Lahanagiller Sebzelerini Kabul ve Tüketim Üzerine Etkilerinin Karşılaştırılması"},
+      {ilce:"Sancaktepe",    okul:"İbni Sina Ortaokulu",                                       ad:"Enver Muttalip DURSUN",                                               tel:"5536759658",              konu:"Zihinsel Yetersizliği Olan Öğrencilerde Harezmi Eğitim Modeli Temelli Etkinliklerin İletişim Becerileri Gelişimine Etkisi: Bir Nitel Durum"},
+      {ilce:"Tuzla",         okul:"Gazi Mustafa Paşa Ortaokulu",                               ad:"Erge Evşen KARAER",                                                  tel:"5384190352",              konu:"TYMM Temelinde Harezmi Eğitim Modeli'nde Kapsayıcı Eğitim Uygulamalarına Yönelik Çalışmaların İncelenmesi"},
+      {ilce:"Üsküdar",       okul:"Küplüce Cahit Zarifoğlu İlkokulu",                          ad:"MERVE HACER DÖLEKER",                                                 tel:"5466190916",              konu:"Okul Öncesi Öğrenci Grubunda TYMM Kapsamında Akran Nezaketi"},
+    ]
+  },
+];
+
+// Build legend & theme filter
+const legendEl = document.getElementById('legend');
+const filterSel = document.getElementById('themeFilter');
+
+THEMES.forEach(t => {
+  // legend item
+  const li = document.createElement('div');
+  li.className = 'legend-item';
+  li.dataset.id = t.id;
+  li.innerHTML = `<span class="legend-dot" style="background:${t.color}"></span>${t.title}`;
+  li.addEventListener('click', () => {
+    filterSel.value = String(t.id);
+    filterSel.dispatchEvent(new Event('change'));
+  });
+  legendEl.appendChild(li);
+
+  // select option
+  const opt = document.createElement('option');
+  opt.value = t.id; opt.textContent = `Tema ${t.id}: ${t.title}`;
+  filterSel.appendChild(opt);
+});
+
+// Build all theme blocks
+const content = document.getElementById('content');
+
+function buildContent() {
+  content.innerHTML = '';
+  THEMES.forEach(t => {
+    const block = document.createElement('div');
+    block.className = 'theme-block';
+    block.dataset.id = t.id;
+
+    // header
+    const h = document.createElement('div');
+    h.className = 'theme-header';
+    h.style.background = t.light;
+    h.innerHTML = `
+      <span class="theme-dot" style="background:${t.color}"></span>
+      <span class="theme-title" style="color:${t.color}">Tema ${t.id} — ${t.title}</span>
+      <span class="theme-count" style="background:${t.color};color:#fff">${t.rows.length} kayıt</span>
+      <span class="theme-toggle" style="color:${t.color}">▼</span>
+    `;
+    h.addEventListener('click', () => block.classList.toggle('collapsed'));
+    block.appendChild(h);
+
+    // table
+    const wrap = document.createElement('div');
+    wrap.className = 'table-wrap';
+    const table = document.createElement('table');
+    table.innerHTML = `
+      <thead><tr>
+        <th>#</th>
+        <th>İlçe</th>
+        <th>Okul</th>
+        <th>Ad Soyad</th>
+        <th>Telefon</th>
+        <th>Bildiri / Konu</th>
+      </tr></thead>
+      <tbody></tbody>`;
+    const tbody = table.querySelector('tbody');
+
+    t.rows.forEach((row, i) => {
+      const tr = document.createElement('tr');
+      tr.dataset.search = (row.ilce+row.okul+row.ad+row.tel+row.konu).toLowerCase();
+      tr.innerHTML = `
+        <td>${i+1}</td>
+        <td><span class="ilce-badge" style="background:${t.light};color:${t.color};border:1px solid ${t.color}33">${row.ilce}</span></td>
+        <td><div class="ad-cell">${row.okul}</div></td>
+        <td><div class="ad-cell">${row.ad}</div></td>
+        <td class="tel-cell">${row.tel}</td>
+        <td class="konu-cell">${row.konu}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    wrap.appendChild(table);
+    block.appendChild(wrap);
+    content.appendChild(block);
+  });
+}
+
+buildContent();
+
+// Filter & search logic
+function applyFilters() {
+  const q = document.getElementById('searchInput').value.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const tid = document.getElementById('themeFilter').value;
+
+  let shown = 0;
+  document.querySelectorAll('.theme-block').forEach(block => {
+    const matchTheme = !tid || block.dataset.id === tid;
+    if (!matchTheme) { block.classList.add('hidden'); return; }
+    block.classList.remove('hidden');
+
+    let blockVisible = 0;
+    block.querySelectorAll('tbody tr').forEach(tr => {
+      const text = tr.dataset.search.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      const match = !q || text.includes(q);
+      tr.style.display = match ? '' : 'none';
+      if (match) { blockVisible++; shown++; }
+    });
+
+    // hide block if all rows hidden
+    if (blockVisible === 0 && q) block.classList.add('hidden');
+  });
+
+  document.getElementById('countShown').textContent = shown;
+  document.getElementById('noResult').style.display = shown === 0 ? 'block' : 'none';
+  content.style.display = shown === 0 ? 'none' : '';
+
+  // update legend active
+  document.querySelectorAll('.legend-item').forEach(li => {
+    li.classList.toggle('active', li.dataset.id === tid);
+  });
+}
+
+document.getElementById('searchInput').addEventListener('input', applyFilters);
+document.getElementById('themeFilter').addEventListener('change', applyFilters);
+</script>
+</body>
+</html>
